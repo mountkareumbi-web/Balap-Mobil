@@ -1,66 +1,33 @@
-let selectedRole = null;
-let myRole = null;
+document.addEventListener("DOMContentLoaded", () => {
+    const loginContainer = document.getElementById("login-container");
+    const joystickContainer = document.getElementById("joystick-container");
+    const controllerTitle = document.getElementById("controller-title");
+    const playerNameInput = document.getElementById("player-name");
 
-// Pilih Stik 1 atau Stik 2
-document.getElementById('btn-p1').addEventListener('click', () => openNameSetup('p1', 'Stik 1 (Merah)'));
-document.getElementById('btn-p2').addEventListener('click', () => openNameSetup('p2', 'Stik 2 (Hijau)'));
+    document.querySelectorAll(".slot-btn").forEach(button => {
+        button.addEventListener("click", (e) => {
+            const slot = e.target.getAttribute("data-slot");
+            const name = playerNameInput.value.trim() || `Player ${slot}`;
 
-function openNameSetup(role, label) {
-    selectedRole = role;
-    document.getElementById('selected-stick-title').innerText = `Nama Pemain - ${label}`;
-    document.getElementById('menu-screen').classList.remove('active');
-    document.getElementById('name-screen').classList.add('active');
-}
+            loginContainer.classList.add("hidden");
+            joystickContainer.classList.remove("hidden");
+            controllerTitle.innerText = `Stik Aktif: ${name} (P${slot})`;
+        });
+    });
 
-// Konfirmasi Nama & Masuk ke Mode Stik
-document.getElementById('btn-confirm-name').addEventListener('click', () => {
-    const playerName = document.getElementById('player-name-input').value.trim() || (selectedRole === 'p1' ? 'Player 1' : 'Player 2');
-    socket.emit('joinRole', { role: selectedRole, name: playerName });
-});
-
-// Jika ditolak karena slot baru saja direbut device lain
-socket.on('roleRejected', (msg) => {
-    alert(msg);
-    document.getElementById('name-screen').classList.remove('active');
-    document.getElementById('menu-screen').classList.add('active');
-});
-
-// Jika diterima masuk sebagai Stik
-socket.on('roleAccepted', ({ role, name }) => {
-    if (role === 'p1' || role === 'p2') {
-        myRole = role;
-        document.getElementById('name-screen').classList.remove('active');
-        document.getElementById('controller-screen').classList.add('active');
-        document.getElementById('ctrl-player-info').innerText = `${role.toUpperCase()} - ${name}`;
-
-        // Coba kunci layar ke mode landscape otomatis (jika didukung browser HP)
-        if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {});
+    // Simulasi tombol kontrol
+    const bindControl = (id, action) => {
+        const btn = document.getElementById(id);
+        if(btn) {
+            btn.addEventListener("touchstart", () => console.log(action + " Ditekan"));
+            btn.addEventListener("touchend", () => console.log(action + " Dilepas"));
+            btn.addEventListener("mousedown", () => console.log(action + " Ditekan"));
+            btn.addEventListener("mouseup", () => console.log(action + " Dilepas"));
         }
-    }
-});
-
-// Kontrol Sentuh Multi-Touch & Mouse
-const buttons = document.querySelectorAll('.ctrl-btn');
-buttons.forEach(btn => {
-    const key = btn.getAttribute('data-key');
-
-    const press = (e) => {
-        e.preventDefault();
-        btn.classList.add('pressed');
-        if (myRole) socket.emit('controlInput', { role: myRole, key, state: true });
     };
 
-    const release = (e) => {
-        e.preventDefault();
-        btn.classList.remove('pressed');
-        if (myRole) socket.emit('controlInput', { role: myRole, key, state: false });
-    };
-
-    btn.addEventListener('touchstart', press, { passive: false });
-    btn.addEventListener('touchend', release, { passive: false });
-    btn.addEventListener('touchcancel', release, { passive: false });
-    btn.addEventListener('mousedown', press);
-    btn.addEventListener('mouseup', release);
-    btn.addEventListener('mouseleave', release);
+    bindControl("btn-up", "GAS");
+    bindControl("btn-down", "REM");
+    bindControl("btn-left", "KIRI");
+    bindControl("btn-right", "KANAN");
 });
