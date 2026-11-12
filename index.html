@@ -3,55 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2D Multiplayer Racing - Split Screen</title>
+    <title>2D Split-Screen Racing - Satu Arena</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Menu Utama -->
+    <!-- Menu Utama / Pemilihan Mode -->
     <div id="menu-screen" class="screen">
-        <h1>🏁 2D MULTIPLAYER RACING 🏁</h1>
-        <p>Pilih mode perangkat:</p>
+        <h1>🏁 2D SPLIT-SCREEN RACING 🏁</h1>
+        <p>Pilih mode perangkat Anda:</p>
         <div class="menu-buttons">
-            <button id="btn-display" class="btn primary">📺 Buka Layar Utama (Display)</button>
-            <button id="btn-controller" class="btn secondary">📱 Gunakan Sebagai Stik (Controller)</button>
+            <button id="btn-display" class="btn primary">📺 Buka Layar Utama (Display TV/Laptop)</button>
+            <button id="btn-controller" class="btn secondary">📱 Gunakan Sebagai Stik Kontrol (HP)</button>
         </div>
     </div>
 
-    <!-- Layar Utama Permainan -->
+    <!-- Layar Utama Permainan (Split-Screen) -->
     <div id="display-screen" class="screen hidden">
         <div class="split-container">
-            <div class="player-view" id="view-p1">
-                <div class="hud">Player 1: <span id="name-p1">Menunggu...</span> | Skor: <span id="score-p1">0</span></div>
+            <!-- Tampilan Kamera Player 1 -->
+            <div class="player-view">
+                <div class="hud">P1: <span id="hud-name-1">Player 1</span> | Lap: <span id="hud-lap-1">1/3</span></div>
                 <canvas id="canvas-p1"></canvas>
             </div>
             <div class="split-divider"></div>
-            <div class="player-view" id="view-p2">
-                <div class="hud">Player 2: <span id="name-p2">Menunggu...</span> | Skor: <span id="score-p2">0</span></div>
+            <!-- Tampilan Kamera Player 2 -->
+            <div class="player-view">
+                <div class="hud">P2: <span id="hud-name-2">Player 2</span> | Lap: <span id="hud-lap-2">1/3</span></div>
                 <canvas id="canvas-p2"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Layar Kontroler HP -->
+    <!-- Layar Stik Kontroler HP -->
     <div id="controller-screen" class="screen hidden">
         <div id="login-container">
-            <h2>Pilih Stik Anda</h2>
-            <input type="text" id="player-name" placeholder="Masukkan Nama Kamu" maxlength="10">
+            <h2>Pilih Slot Stik</h2>
+            <input type="text" id="player-name" placeholder="Nama Pembalap" maxlength="10">
             <div class="slot-buttons">
-                <button class="btn slot-btn" data-slot="1">Gabung Sebagai P1</button>
-                <button class="btn slot-btn" data-slot="2">Gabung Sebagai P2</button>
+                <button class="btn slot-btn" data-slot="1">Gabung Sebagai Player 1</button>
+                <button class="btn slot-btn" data-slot="2">Gabung Sebagai Player 2</button>
             </div>
         </div>
         
         <div id="joystick-container" class="hidden">
             <h3 id="controller-title">Stik Aktif</h3>
             <div class="controls-pad">
-                <button id="btn-up" class="ctrl-btn">▲ Gas</button>
+                <button id="btn-up" class="ctrl-btn">▲ GAS</button>
                 <div class="horizontal-controls">
-                    <button id="btn-left" class="ctrl-btn">◀ Kiri</button>
-                    <button id="btn-right" class="ctrl-btn">Kanan ▶</button>
+                    <button id="btn-left" class="ctrl-btn">◀ KIRI</button>
+                    <button id="btn-right" class="ctrl-btn">KANAN ▶</button>
                 </div>
-                <button id="btn-down" class="ctrl-btn">▼ Rem</button>
+                <button id="btn-down" class="ctrl-btn">▼ REM / MUNDUR</button>
             </div>
         </div>
     </div>
