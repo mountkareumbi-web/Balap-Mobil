@@ -40,6 +40,10 @@ socket.on('roleAccepted', ({ role }) => {
         isDisplay = true;
         document.getElementById('menu-screen').classList.remove('active');
         document.getElementById('display-screen').classList.add('active');
+        
+        // Sesuaikan ukuran canvas untuk split-screen (Lebar 1000 x Tinggi 600)
+        canvas.width = 1000;
+        canvas.height = 600;
         requestAnimationFrame(gameLoop);
     }
 });
@@ -83,7 +87,6 @@ socket.on('resetRace', () => {
     Object.assign(cars.p2, { x: 460, y: 525, angle: 0, speed: 0, nitro: 100, lap: 0, checkpoint: false });
 });
 
-// Suara Klakson Sederhana (Web Audio API)
 function playHornSound() {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = audioCtx.createOscillator();
@@ -108,12 +111,10 @@ function updateCar(car, roleKey) {
     if (car.controls.gas) car.speed += 0.18;
     if (car.controls.brake) car.speed -= 0.25;
 
-    // Gesekan aspal
     car.speed *= 0.96;
     if (car.speed > maxSpeed) car.speed = maxSpeed;
     if (car.speed < -2.5) car.speed = -2.5;
 
-    // Belok hanya jika mobil bergerak
     if (Math.abs(car.speed) > 0.2) {
         const turnSpeed = 0.045 * (car.speed > 0 ? 1 : -1);
         if (car.controls.left) car.angle -= turnSpeed;
@@ -123,21 +124,19 @@ function updateCar(car, roleKey) {
     car.x += Math.cos(car.angle) * car.speed;
     car.y += Math.sin(car.angle) * car.speed;
 
-    // Batas luar layar
-    car.x = Math.max(30, Math.min(canvas.width - 30, car.x));
-    car.y = Math.max(30, Math.min(canvas.height - 30, car.y));
+    car.x = Math.max(30, Math.min(1800 - 30, car.x));
+    car.y = Math.max(30, Math.min(1200 - 30, car.y));
 
-    // Perlambatan jika keluar aspal (rumput tengah / pinggir)
-    const distFromCenter = Math.hypot((car.x - 500) / 1.8, car.y - 300);
-    if (distFromCenter < 110 || distFromCenter > 265) {
+    // Sistem Checkpoint & Lap (Sirkuit diperbesar jadi 1800x1200)
+    const distFromCenter = Math.hypot((car.x - 900) / 1.8, car.y - 600);
+    if (distFromCenter < 250 || distFromCenter > 550) {
         car.speed *= 0.90;
     }
 
-    // Sistem Checkpoint & Lap (Garis Finish di x = 500, y > 420)
-    if (car.y < 180 && Math.abs(car.x - 500) < 80) {
+    if (car.y < 350 && Math.abs(car.x - 900) < 180) {
         car.checkpoint = true;
     }
-    if (car.checkpoint && car.y > 420 && Math.abs(car.x - 500) < 40) {
+    if (car.checkpoint && car.y > 850 && Math.abs(car.x - 900) < 100) {
         car.lap++;
         car.checkpoint = false;
         const icon = roleKey === 'p1' ? '🔴' : '🟢';
@@ -151,83 +150,134 @@ function updateCar(car, roleKey) {
     }
 }
 
-// Menggambar Sirkuit & Mobil
-function drawTrack() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+// Menggambar Seluruh Sirkuit
+function drawFullTrack(renderContext) {
+    // Background Rumput
+    renderContext.fillStyle = '#2d5a27';
+    renderContext.fillRect(0, 0, 1800, 1200);
 
-    // Aspal Oval
-    ctx.beginPath();
-    ctx.ellipse(500, 300, 430, 240, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#374151';
-    ctx.fill();
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = '#ffffff';
-    ctx.stroke();
+    // Aspal Oval Besar
+    renderContext.beginPath();
+    renderContext.ellipse(900, 600, 800, 450, 0, 0, Math.PI * 2);
+    renderContext.fillStyle = '#374151';
+    renderContext.fill();
+    renderContext.lineWidth = 12;
+    renderContext.strokeStyle = '#ffffff';
+    renderContext.stroke();
 
     // Rumput Tengah
-    ctx.beginPath();
-    ctx.ellipse(500, 300, 220, 100, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#2d5a27';
-    ctx.fill();
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = '#ef4444';
-    ctx.stroke();
+    renderContext.beginPath();
+    renderContext.ellipse(900, 600, 400, 200, 0, 0, Math.PI * 2);
+    renderContext.fillStyle = '#2d5a27';
+    renderContext.fill();
+    renderContext.lineWidth = 8;
+    renderContext.strokeStyle = '#ef4444';
+    renderContext.stroke();
 
-    // Garis Finish (Kotak-kotak)
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(495, 400, 10, 140);
-    ctx.fillStyle = '#000000';
-    for (let y = 400; y < 540; y += 20) {
-        ctx.fillRect(495, y, 10, 10);
+    // Garis Finish
+    renderContext.fillStyle = '#ffffff';
+    renderContext.fillRect(890, 800, 20, 250);
+    renderContext.fillStyle = '#000000';
+    for (let y = 800; y < 1050; y += 25) {
+        renderContext.fillRect(890, y, 20, 12);
     }
 }
 
-function drawCar(car) {
+function drawCar(renderContext, car) {
     if (!car.active) return;
-    ctx.save();
-    ctx.translate(car.x, car.y);
-    ctx.rotate(car.angle);
+    renderContext.save();
+    renderContext.translate(car.x, car.y);
+    renderContext.rotate(car.angle);
 
-    // Efek Api Nitro
     if (car.controls.nitro && car.nitro > 0 && car.controls.gas) {
-        ctx.fillStyle = '#f59e0b';
-        ctx.beginPath();
-        ctx.moveTo(-22, -6);
-        ctx.lineTo(-38 - Math.random() * 10, 0);
-        ctx.lineTo(-22, 6);
-        ctx.fill();
+        renderContext.fillStyle = '#f59e0b';
+        renderContext.beginPath();
+        renderContext.moveTo(-22, -6);
+        renderContext.lineTo(-38 - Math.random() * 10, 0);
+        renderContext.lineTo(-22, 6);
+        renderContext.fill();
     }
 
-    // Bodi Mobil
-    ctx.fillStyle = car.color;
-    ctx.fillRect(-20, -11, 40, 22);
+    renderContext.fillStyle = car.color;
+    renderContext.fillRect(-20, -11, 40, 22);
 
-    // Kaca Depan
-    ctx.fillStyle = '#93c5fd';
-    ctx.fillRect(4, -8, 10, 16);
+    renderContext.fillStyle = '#93c5fd';
+    renderContext.fillRect(4, -8, 10, 16);
 
-    // Roda
-    ctx.fillStyle = '#111';
-    ctx.fillRect(-15, -14, 10, 3);
-    ctx.fillRect(8, -14, 10, 3);
-    ctx.fillRect(-15, 11, 10, 3);
-    ctx.fillRect(8, 11, 10, 3);
+    renderContext.fillStyle = '#111';
+    renderContext.fillRect(-15, -14, 10, 3);
+    renderContext.fillRect(8, -14, 10, 3);
+    renderContext.fillRect(-15, 11, 10, 3);
+    renderContext.fillRect(8, 11, 10, 3);
 
+    renderContext.restore();
+
+    renderContext.fillStyle = 'white';
+    renderContext.font = 'bold 16px sans-serif';
+    renderContext.textAlign = 'center';
+    renderContext.fillText(car.name, car.x, car.y - 25);
+}
+
+// Render Layar Terbelah (Split-Screen) untuk Masing-Masing Kamera Player
+function drawSplitScreen() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const halfWidth = canvas.width / 2;
+    const halfHeight = canvas.height;
+
+    // --- KOTAK KIRI (Kamera Player 1) ---
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, halfWidth, halfHeight);
+    ctx.clip();
+
+    ctx.save();
+    // Geser kamera agar fokus mengikuti Player 1
+    ctx.translate(halfWidth / 2 - cars.p1.x, halfHeight / 2 - cars.p1.y);
+    drawFullTrack(ctx);
+    drawCar(ctx, cars.p1);
+    drawCar(ctx, cars.p2);
     ctx.restore();
 
-    // Nama Pemain di atas mobil
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(car.name, car.x, car.y - 20);
+    // Label penanda layar Player 1
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(10, 10, 140, 35);
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText(`🔴 ${cars.p1.name} (P1)`, 80, 32);
+    ctx.restore();
+
+    // --- PEMBATAS TENGAH ---
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(halfWidth - 3, 0, 6, halfHeight);
+
+    // --- KOTAK KANAN (Kamera Player 2) ---
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(halfWidth, 0, halfWidth, halfHeight);
+    ctx.clip();
+
+    ctx.save();
+    // Geser kamera agar fokus mengikuti Player 2
+    ctx.translate(halfWidth + halfWidth / 2 - cars.p2.x, halfHeight / 2 - cars.p2.y);
+    drawFullTrack(ctx);
+    drawCar(ctx, cars.p1);
+    drawCar(ctx, cars.p2);
+    ctx.restore();
+
+    // Label penanda layar Player 2
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(halfWidth + 10, 10, 140, 35);
+    ctx.fillStyle = '#22c55e';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText(`🟢 ${cars.p2.name} (P2)`, halfWidth + 80, 32);
+    ctx.restore();
 }
 
 function gameLoop() {
     if (!isDisplay) return;
     updateCar(cars.p1, 'p1');
     updateCar(cars.p2, 'p2');
-    drawTrack();
-    drawCar(cars.p1);
-    drawCar(cars.p2);
+    drawSplitScreen();
     requestAnimationFrame(gameLoop);
 }
