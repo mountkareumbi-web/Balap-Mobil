@@ -2,74 +2,64 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2D Multiplayer Racing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Multiplayer Racing - Split Screen</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <!-- 1. LAYAR MENU UTAMA -->
-    <div id="menu-screen" class="screen active">
-        <h1>🏎️ 2D TURBO RACING</h1>
-        <p>Pilih peran perangkat ini:</p>
+    <!-- Menu Utama / Mode Selection -->
+    <div id="menu-screen" class="screen">
+        <h1>🏁 2D MULTIPLAYER RACING 🏁</h1>
+        <p>Pilih mode perangkat yang ingin digunakan:</p>
         <div class="menu-buttons">
-            <button id="btn-display" class="btn primary">🖥️ Buka Display (Layar Utama)</button>
-            <button id="btn-p1" class="btn p1-color">🎮 Pakai Stik 1</button>
-            <button id="btn-p2" class="btn p2-color">🎮 Pakai Stik 2</button>
-        </div>
-        <p id="error-msg" class="error"></p>
-    </div>
-
-    <!-- 2. LAYAR INPUT NAMA PEMAIN (UNTUK STIK) -->
-    <div id="name-screen" class="screen">
-        <h2 id="selected-stick-title">Setup Stik</h2>
-        <input type="text" id="player-name-input" placeholder="Masukkan Nama Kamu..." maxlength="12">
-        <button id="btn-confirm-name" class="btn primary">Mulai Balapan!</button>
-    </div>
-
-    <!-- 3. LAYAR DISPLAY UTAMA (PC / TV / TABLET) -->
-    <div id="display-screen" class="screen">
-        <div class="hud-top">
-            <div id="p1-hud" class="hud-box p1-border">Stik 1: Menunggu...</div>
-            <div id="race-status">Menunggu Pemain...</div>
-            <div id="p2-hud" class="hud-box p2-border">Stik 2: Menunggu...</div>
-        </div>
-        <canvas id="gameCanvas" width="1000" height="600"></canvas>
-        <div id="winner-overlay" class="hidden">
-            <h1 id="winner-text">PEMENANG!</h1>
-            <button id="btn-restart" class="btn primary">Main Lagi</button>
+            <button id="btn-display" class="btn primary">📺 Buka Layar Utama (Display)</button>
+            <button id="btn-controller" class="btn secondary">📱 Gunakan Sebagai Stik (Controller)</button>
         </div>
     </div>
 
-    <!-- 4. LAYAR STIK KONTROLER (HP LANDSCAPE) -->
-    <div id="controller-screen" class="screen">
-        <div class="rotate-warning">🔄 Putar HP kamu ke posisi <b>Landscape (Miring)</b>!</div>
-        <div class="gamepad-container">
-            <div class="gamepad-header">
-                <span id="ctrl-player-info">Player</span>
-                <span id="nitro-bar-container">NITRO: <progress id="nitro-bar" value="100" max="100"></progress></span>
+    <!-- Layar Utama Permainan (Split-Screen Display) -->
+    <div id="display-screen" class="screen hidden">
+        <div class="split-container">
+            <!-- Sisi Player 1 -->
+            <div class="player-view" id="view-p1">
+                <div class="hud">Player 1: <span id="name-p1">Menunggu...</span> | Skor: <span id="score-p1">0</span></div>
+                <canvas id="canvas-p1"></canvas>
             </div>
-            <div class="gamepad-body">
-                <!-- Kiri: Setir Kiri & Kanan -->
-                <div class="pad-left">
-                    <button class="ctrl-btn steer" data-key="left">◀</button>
-                    <button class="ctrl-btn steer" data-key="right">▶</button>
-                </div>
-                <!-- Tengah: Klakson / Reset posisi -->
-                <div class="pad-center">
-                    <button class="ctrl-btn small" data-key="horn">📯 KLAKSON</button>
-                </div>
-                <!-- Kanan: Rem, Nitro, Gas -->
-                <div class="pad-right">
-                    <button class="ctrl-btn brake" data-key="brake">REM</button>
-                    <button class="ctrl-btn nitro" data-key="nitro">🔥 NOS</button>
-                    <button class="ctrl-btn gas" data-key="gas">GAS</button>
-                </div>
+            <!-- Garis Pemisah Split Screen -->
+            <div class="split-divider"></div>
+            <!-- Sisi Player 2 -->
+            <div class="player-view" id="view-p2">
+                <div class="hud">Player 2: <span id="name-p2">Menunggu...</span> | Skor: <span id="score-p2">0</span></div>
+                <canvas id="canvas-p2"></canvas>
             </div>
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <!-- Layar Kontroler HP (Stik) -->
+    <div id="controller-screen" class="screen hidden">
+        <div id="login-container">
+            <h2>Pilih Stik Anda</h2>
+            <input type="text" id="player-name" placeholder="Masukkan Nama Kamu" maxlength="10">
+            <div class="slot-buttons">
+                <button class="btn slot-btn" data-slot="1">Gabung Sebagai P1</button>
+                <button class="btn slot-btn" data-slot="2">Gabung Sebagai P2</button>
+            </div>
+        </div>
+        
+        <div id="joystick-container" class="hidden">
+            <h3 id="controller-title">Stik Aktif</h3>
+            <div class="controls-pad">
+                <button id="btn-up" class="ctrl-btn">▲ Gas</button>
+                <div class="horizontal-controls">
+                    <button id="btn-left" class="ctrl-btn">◀ Kiri</button>
+                    <button id="btn-right" class="ctrl-btn">Kanan ▶</button>
+                </div>
+                <button id="btn-down" class="ctrl-btn">▼ Rem</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script utama (Otomatis mendeteksi mode berdasarkan URL/Klik) -->
     <script src="display.js"></script>
     <script src="controller.js"></script>
 </body>
