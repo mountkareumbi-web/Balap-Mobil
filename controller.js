@@ -18,8 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const bindControl = (id, action) => {
         const btn = document.getElementById(id);
         if(btn) {
-            btn.addEventListener("touchstart", () => console.log(action + " Ditekan"));
-            btn.addEventListener("touchend", () => console.log(action + " Dilepas"));
+            btn.addEventListener("touchstart", (e) => { e.preventDefault(); console.log(action + " Ditekan"); });
+            btn.addEventListener("touchend", (e) => { e.preventDefault(); console.log(action + " Dilepas"); });
             btn.addEventListener("mousedown", () => console.log(action + " Ditekan"));
             btn.addEventListener("mouseup", () => console.log(action + " Dilepas"));
         }
